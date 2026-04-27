@@ -1,0 +1,42 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion 35
+
+    defaultConfig {
+        minSdkVersion 24
+        targetSdkVersion 35
+        vectorDrawables.useSupportLibrary = true
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+
+    namespace 'com.hbb20'
+   /* defaultConfig {
+        vectorDrawables.useSupportLibrary = true
+    }*/
+    tasks.withType(Javadoc).all { enabled = false }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    testImplementation 'junit:junit:4.13.2'
+    implementation 'androidx.recyclerview:recyclerview:1.4.0'
+    //noinspection GradleDependency
+    implementation 'androidx.appcompat:appcompat:1.5.1'
+    implementation 'io.michaelrocks:libphonenumber-android:9.0.12'
+    implementation "androidx.cardview:cardview:1.0.0"
+}
+
+
+/**
+ * While uploading,
+ * ./gradlew install
+ *
+ * ./gradlew bintrayUpload
+ */

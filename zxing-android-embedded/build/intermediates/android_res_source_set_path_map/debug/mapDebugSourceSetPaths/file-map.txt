@@ -1,0 +1,9 @@
+com.google.zxing.client.android.zxing-android-embedded-pngs-0 C:\Users\muhammad wasiq\AndroidStudioProjects\QrCodeApp\zxing-android-embedded\build\generated\res\pngs\debug
+com.google.zxing.client.android.zxing-android-embedded-updated_navigation_xml-1 C:\Users\muhammad wasiq\AndroidStudioProjects\QrCodeApp\zxing-android-embedded\build\generated\updated_navigation_xml\debug
+com.google.zxing.client.android.zxing-android-embedded-mergeDebugResources-2 C:\Users\muhammad wasiq\AndroidStudioProjects\QrCodeApp\zxing-android-embedded\build\intermediates\incremental\debug\mergeDebugResources\merged.dir
+com.google.zxing.client.android.zxing-android-embedded-mergeDebugResources-3 C:\Users\muhammad wasiq\AndroidStudioProjects\QrCodeApp\zxing-android-embedded\build\intermediates\incremental\debug\mergeDebugResources\stripped.dir
+com.google.zxing.client.android.zxing-android-embedded-debug-4 C:\Users\muhammad wasiq\AndroidStudioProjects\QrCodeApp\zxing-android-embedded\build\intermediates\merged_res\debug\mergeDebugResources
+com.google.zxing.client.android.zxing-android-embedded-debug-5 C:\Users\muhammad wasiq\AndroidStudioProjects\QrCodeApp\zxing-android-embedded\build\intermediates\packaged_res\debug\packageDebugResources
+com.google.zxing.client.android.zxing-android-embedded-zxing-android-embedded-6 C:\Users\muhammad wasiq\AndroidStudioProjects\QrCodeApp\zxing-android-embedded\res
+com.google.zxing.client.android.zxing-android-embedded-zxing-android-embedded-7 C:\Users\muhammad wasiq\AndroidStudioProjects\QrCodeApp\zxing-android-embedded\res-orig
+com.google.zxing.client.android.zxing-android-embedded-debug-8 C:\Users\muhammad wasiq\AndroidStudioProjects\QrCodeApp\zxing-android-embedded\src\debug\res

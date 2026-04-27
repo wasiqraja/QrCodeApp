@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="test">#221224</color>
+    <color name="defaultContentColor">@android:color/black</color>
+    <color name="defaultBorderFlagColor">@android:color/transparent</color>
+    <color name="pressed_bg">#64b7b7b7</color>
+
+    <color name="background">#E5E5E5</color>
+    <color name="ed_background">#FFFFFF</color>
+    <color name="text_color">#575757</color>
+    <color name="colorPrimary">#009684</color>
+
+
+</resources>

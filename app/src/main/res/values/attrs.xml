@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <declare-styleable name="PhotoEditorView">
+        <attr name="photo_src" format="integer" />
+    </declare-styleable>
+    <declare-styleable name="CodeScannerView">
+        <attr format="color" name="maskColor"/>
+        <attr format="color" name="frameColor"/>
+        <attr format="color" name="autoFocusButtonColor"/>
+        <attr format="color" name="flashButtonColor"/>
+        <attr format="boolean" name="autoFocusButtonVisible"/>
+        <attr format="boolean" name="flashButtonVisible"/>
+        <attr format="dimension" name="frameThickness"/>
+        <attr format="dimension" name="frameCornersSize"/>
+        <attr format="dimension" name="frameCornersRadius"/>
+        <attr format="float" name="frameAspectRatioWidth"/>
+        <attr format="float" name="frameAspectRatioHeight"/>
+        <attr format="float" name="frameSize"/>
+    </declare-styleable>
+    <declare-styleable name="scv_CropImageView">
+        <attr format="reference" name="scv_img_src"/>
+        <attr name="scv_crop_mode">
+            <enum name="fit_image" value="0"/>
+            <enum name="ratio_4_3" value="1"/>
+            <enum name="ratio_3_4" value="2"/>
+            <enum name="square" value="3"/>
+            <enum name="ratio_16_9" value="4"/>
+            <enum name="ratio_9_16" value="5"/>
+            <enum name="free" value="6"/>
+            <enum name="custom" value="7"/>
+            <enum name="circle" value="8"/>
+            <enum name="circle_square" value="9"/>
+        </attr>
+        <attr format="reference|color" name="scv_background_color"/>
+        <attr format="reference|color" name="scv_overlay_color"/>
+        <attr format="reference|color" name="scv_frame_color"/>
+        <attr format="reference|color" name="scv_handle_color"/>
+        <attr format="reference|color" name="scv_guide_color"/>
+        <attr name="scv_guide_show_mode">
+            <enum name="show_always" value="1"/>
+            <enum name="show_on_touch" value="2"/>
+            <enum name="not_show" value="3"/>
+        </attr>
+        <attr name="scv_handle_show_mode">
+            <enum name="show_always" value="1"/>
+            <enum name="show_on_touch" value="2"/>
+            <enum name="not_show" value="3"/>
+        </attr>
+        <attr format="dimension" name="scv_handle_size"/>
+        <attr format="dimension" name="scv_touch_padding"/>
+        <attr format="dimension" name="scv_min_frame_size"/>
+        <attr format="dimension" name="scv_frame_stroke_weight"/>
+        <attr format="dimension" name="scv_guide_stroke_weight"/>
+        <attr format="boolean" name="scv_crop_enabled"/>
+        <attr format="float" name="scv_initial_frame_scale"/>
+        <attr format="boolean" name="scv_animation_enabled"/>
+        <attr format="integer" name="scv_animation_duration"/>
+        <attr format="boolean" name="scv_handle_shadow_enabled"/>
+    </declare-styleable>
+
+    <declare-styleable name="ColorPickerView" parent="ColorPanelView">
+        <attr name="cpv_alphaChannelVisible" format="boolean|reference" />
+        <attr name="cpv_alphaChannelText" format="string|reference" />
+        <attr name="cpv_sliderColor" format="color|reference" />
+        <attr name="cpv_borderColor" />
+    </declare-styleable>
+
+    <declare-styleable name="ColorPanelView">
+        <attr name="cpv_showOldColor" format="boolean" />
+        <attr name="cpv_colorShape" format="enum">
+            <enum name="square" value="0" />
+            <enum name="circle" value="1" />
+        </attr>
+        <attr name="cpv_borderColor" format="color|reference" />
+    </declare-styleable>
+
+    <declare-styleable name="GradientView">
+        <attr name="gv_start" format="color" />
+        <attr name="gv_alpha_start" format="float" />
+        <attr name="gv_end" format="color" />
+        <attr name="gv_alpha_end" format="float" />
+        <attr name="gv_direction">
+            <flag name="left_to_right" value="1" />
+            <flag name="right_to_left" value="2" />
+            <flag name="top_to_bottom" value="3" />
+            <flag name="bottom_to_top" value="4" />
+        </attr>
+    </declare-styleable>
+
+
+    <attr name="checkedColor" format="color" />
+    <attr name="uncheckedColor" format="color" />
+</resources>

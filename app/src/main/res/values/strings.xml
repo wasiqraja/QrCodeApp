@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">QrCodeApp</string>
+    <string name="qr_code">QR CODE</string>
+    <color name="textColor">#000000</color>
+</resources>

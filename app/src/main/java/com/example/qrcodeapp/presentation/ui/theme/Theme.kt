@@ -15,10 +15,14 @@ import androidx.compose.ui.platform.LocalContext
 
 private val LightColorScheme = lightColorScheme(
     primary = Color(0xFF101828),
+    onPrimary =Color(0xFF4268FF),
+    onPrimaryContainer = Color(0xFFD8D8D8),
     secondary = Color(0xFF6C727F),
-    tertiary = Color(0xFFDFDFDF),    // lang -border color
+    tertiary = Color(0xFFDFDFDF),
     background = Color(0xFFF6F6F6),
-    surfaceBright = Color(0xFFFFFFFF)
+    onBackground = Color(0xFFFFFFFF),
+    surfaceBright = Color(0xFFFFFFFF),
+    outline = Color(0xFFDFDFDF)
 
 
     /* Other default colors to override
@@ -34,17 +38,21 @@ private val LightColorScheme = lightColorScheme(
 
 private val DarkColorScheme = darkColorScheme(
     primary = Color(0xFFFFFFFF),
+    onPrimary = Color(0xFF4268FF),
+    onPrimaryContainer = Color(0xFF343434),
     secondary = Color(0xFF999999),
-    tertiary = Color(0xFF444444),
+    tertiary = Color(0xFF6C727F),
     background = Color(0xFF222222),
-    surfaceBright = Color(0xFF2F2F2F)
+    onBackground = Color(0xFF222222),
+    surfaceBright = Color(0xFF2F2F2F),
+    outline = Color(0xFF444444)
     )
 
 @Composable
 fun QrCodeAppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {

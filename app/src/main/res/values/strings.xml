@@ -1,5 +1,37 @@
 <resources>
+
     <string name="app_name">QrCodeApp</string>
     <string name="qr_code">QR CODE</string>
+    <string name="scanner">SCANNER</string>
+    <string name="app_language">App Language</string>
     <color name="textColor">#000000</color>
+    <string name="email">Email</string>
+    <string name="contact">Contact</string>
+    <string name="phone">Phone</string>
+    <string name="sms">SMS</string>
+    <string name="location">Location</string>
+    <string name="wifi">Wifi</string>
+    <string name="clipboard">ClipBoard</string>
+    <string name="subject">Subject</string>
+    <string name="body_text">Body text</string>
+    <string name="message">Message</string>
+    <string name="generate_qr_code">Generate QR Code</string>
+    <string name="clip_des">Enter text or paste from clipboard</string>
+    <string name="website">Website</string>
+    <string name="paste_your_website_link_here_to_create_a_qr_code">Paste your website link here to create a QR code</string>
+    <string name="lat">Latitude</string>
+    <string name="lon">Longitude</string>
+    <string name="query">Query</string>
+    <string name="ssid">SSID/Network Name</string>
+    <string name="pass">Password</string>
+    <string name="sel_type">Select Type</string>
+    <string name="full_name">Full Name</string>
+    <string name="organization">Organization</string>
+    <string name="addreess">Address</string>
+    <string name="notes">Notes</string>
+    <string name="des">Description</string>
+    <string name="start_date">Start Date</string>
+    <string name="end_date">End Date</string>
+    <string name="calendar">Calendar</string>
+
 </resources>

@@ -13,6 +13,7 @@ import com.example.qrcodeapp.core.utils.model.Dots
 import com.example.qrcodeapp.core.utils.model.Eyes
 import com.example.qrcodeapp.core.utils.model.LogoType
 import com.example.qrcodeapp.data.dto.QrType
+import com.example.qrcodeapp.data.local.entitiy.CreateQRCodeSocialModel
 import com.example.qrcodeapp.domain.model.ApplyParam
 import com.example.qrcodeapp.domain.model.BackgroundColor
 import com.example.qrcodeapp.domain.model.BarCodeModel
@@ -94,6 +95,10 @@ class QrEditorViewModel(
     val historyList: StateFlow<List<History>> = _historyList
 
 
+    private val _socialModel = MutableStateFlow<CreateQRCodeSocialModel?>(null)
+    val socialModel: StateFlow<CreateQRCodeSocialModel?> = _socialModel
+
+
     private val _historyCreateList = MutableStateFlow<List<History>>(emptyList())
     val historyCreateList: StateFlow<List<History>> = _historyCreateList
 
@@ -106,6 +111,10 @@ class QrEditorViewModel(
         }
 
         qrGenerator = QrCodeGenerator(application, threadPolicy)
+    }
+
+    fun setSocialModel(model: CreateQRCodeSocialModel) {
+        _socialModel.value = model
     }
 
     suspend fun initQrDrawable(callback: (Bitmap?) -> Unit) {

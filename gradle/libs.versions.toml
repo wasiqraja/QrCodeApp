@@ -11,6 +11,7 @@ composeBom = "2024.09.00"
 cameraView = "1.6.0"
 composeNavigation = "2.8.9"
 jsonSerialization = "1.7.3"
+material3 = "1.4.0"
 
 
 [libraries]
@@ -31,6 +32,7 @@ androidx-compose-material3 = { group = "androidx.compose.material3", name = "mat
 androidx-camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "cameraView" }
 compose-navigation = { module = "androidx.navigation:navigation-compose", version.ref = "composeNavigation" }
 json-Serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "jsonSerialization" }
+androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

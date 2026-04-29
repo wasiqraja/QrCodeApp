@@ -16,6 +16,7 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
+import com.example.qrcodeapp.core.utils.Constants.cam
 import com.example.qrcodeapp.core.utils.Constants.isWebsite
 import com.example.qrcodeapp.core.utils.ImageUtils
 import com.example.qrcodeapp.core.utils.custom.CustomQRViewJava
@@ -89,12 +90,14 @@ class CameraRepositoryImpl : CameraRepository {
                     if (bitmapCropped != null) {
                         val inp = InputImage.fromBitmap(bitmapCropped, 180)
                         scanner.process(inp).addOnSuccessListener { barcode ->
-                            Log.d("TAG", "startCameraXdbug:::barcode====$barcode: ")
+
 
                             bitmapCropped.recycle()
                             if (barcode.isNotEmpty()) {
                                 checkScannedBarcode(barcode[0])
                                 onResult(barcode[0].displayValue)
+
+                                Log.d("TAGb", "display value=> $barcode: ")
                                 imageProxy.close()
                             } else imageProxy.close()
                         }.addOnFailureListener {
@@ -113,7 +116,9 @@ class CameraRepositoryImpl : CameraRepository {
                         CameraSelector.DEFAULT_BACK_CAMERA,
                         preview,
                         imageAnalysis
-                    )
+                    ).let {
+                        cam = it
+                    }
                 } catch (e: Exception) {
                     Log.e("CameraX", "Binding failed", e)
                 }
@@ -159,7 +164,7 @@ class CameraRepositoryImpl : CameraRepository {
                 if (code.valueType == 5) "https://www.google.com/search?q=${code.displayValue}"
                 else code.displayValue
             logEvent("r=> ${isBarcode} ${url}")
-            //Log.d("SCANNER", "${isBarcode} ${url}")
+            Log.d("SCANNER", "${isBarcode} ${url}")
 
         }
     }

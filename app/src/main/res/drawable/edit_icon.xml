@@ -1,0 +1,28 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="72dp"
+    android:height="30dp"
+    android:viewportWidth="72"
+    android:viewportHeight="30">
+  <path
+      android:strokeWidth="1"
+      android:pathData="M10,0.5L62,0.5A9.5,9.5 0,0 1,71.5 10L71.5,20A9.5,9.5 0,0 1,62 29.5L10,29.5A9.5,9.5 0,0 1,0.5 20L0.5,10A9.5,9.5 0,0 1,10 0.5z"
+      android:fillColor="#00000000"
+      android:strokeColor="#4268FF"/>
+  <path
+      android:pathData="M14.206,17.514L13.75,20.25L16.486,19.794C16.962,19.715 17.4,19.489 17.741,19.148L23.912,12.977C24.363,12.526 24.363,11.795 23.912,11.343L22.657,10.089C22.205,9.637 21.474,9.637 21.022,10.089L14.852,16.259C14.511,16.6 14.285,17.039 14.206,17.514Z"
+      android:strokeLineJoin="round"
+      android:strokeWidth="0.875"
+      android:fillColor="#00000000"
+      android:strokeColor="#4268FF"
+      android:strokeLineCap="round"/>
+  <path
+      android:pathData="M20.167,11.5L22.5,13.833"
+      android:strokeLineJoin="round"
+      android:strokeWidth="0.875"
+      android:fillColor="#00000000"
+      android:strokeColor="#4268FF"
+      android:strokeLineCap="round"/>
+  <path
+      android:pathData="M34.958,20V10.06H40.445V11.53H36.54V14.288H39.843V15.716H36.54V18.53H40.571V20H34.958ZM49.032,20H47.492V18.838H47.45C47.184,19.412 46.26,20.14 44.93,20.14C43.208,20.14 41.402,18.866 41.402,16.36C41.402,13.854 43.208,12.58 44.93,12.58C46.26,12.58 47.184,13.308 47.45,13.882H47.492V10.06H49.032V20ZM42.928,16.36C42.928,17.928 44.062,18.74 45.224,18.74C46.4,18.74 47.534,17.928 47.534,16.36C47.534,14.792 46.4,13.98 45.224,13.98C44.062,13.98 42.928,14.792 42.928,16.36ZM50.571,20V12.72H52.111V20H50.571ZM50.571,11.446V10.06H52.111V11.446H50.571ZM56.195,20.084C55.089,20.084 54.305,19.538 54.305,18.236V13.966H53.297V12.72H54.305V10.858H55.859V12.72H57.329V13.966H55.859V17.956C55.859,18.376 56.083,18.698 56.657,18.698C56.825,18.698 57.063,18.67 57.329,18.572V19.79C57.063,20.014 56.587,20.084 56.195,20.084Z"
+      android:fillColor="#4268FF"/>
+</vector>

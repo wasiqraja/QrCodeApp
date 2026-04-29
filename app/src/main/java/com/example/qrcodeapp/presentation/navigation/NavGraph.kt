@@ -1,5 +1,7 @@
 package com.example.qrcodeapp.presentation.navigation
 
+import com.example.qrcodeapp.data.local.entitiy.CreateQRCodeSocialModel
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 
 
@@ -16,6 +18,12 @@ data object OnBoardingScreen
 @Serializable
 data object HomeScreen
 
+
+@Serializable
+data object SocialDetailScreen
+
+@Serializable
+data object CameraScreen
 
 
 

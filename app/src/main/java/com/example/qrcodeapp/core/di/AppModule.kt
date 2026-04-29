@@ -3,6 +3,7 @@ package com.example.qrcodeapp.core.di
 import androidx.room.Room
 import com.example.qrcodeapp.data.local.database.AppDatabase
 import com.example.qrcodeapp.data.mapper.BarCodeGetter
+import com.example.qrcodeapp.data.mapper.QrCodeListProvider
 import com.example.qrcodeapp.data.mapper.QrTemplateProcessor
 import com.example.qrcodeapp.data.repository.BarCodeGenerateRepositoryImpl
 import com.example.qrcodeapp.data.repository.BarCodeRepositoryImpl
@@ -104,6 +105,9 @@ val appModule = module {
     }
     factory { SaveHistoryCreateUseCase(repository = get()) }
     factory { FetchHistoryCreateUseCase(repository = get()) }
+
+
+    single { QrCodeListProvider() }
 
 
 }

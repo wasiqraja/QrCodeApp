@@ -5,8 +5,10 @@ import kotlinx.coroutines.flow.Flow
 
 // Contract — domain has NO idea about Room!
 interface HistoryRepository {
-    suspend fun saveHistory(history: History)
+    suspend fun saveHistory(history: History) : Long
     fun getAllHistory(): Flow<List<History>>
-    suspend fun deleteHistory(history: History)
+    suspend fun deleteHistory(lastId: Long)
     suspend fun deleteAllHistory()
+
+    suspend fun updateFavourite(id: Int, isFav: Boolean): Boolean
 }

@@ -7,9 +7,11 @@ import androidx.room.PrimaryKey
 data class HistoryScannedEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-    val data: String,
-    val imageRes: Int,
-    val createdAt: Long = System.currentTimeMillis()
+    val originalString: String,
+    val resultedText: String,
+    val type: String,
+    val dateString: String,
+    val isFavourite: Boolean
 )
 
 

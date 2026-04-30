@@ -1,8 +1,6 @@
 package com.example.qrcodeapp.domain.usecase
 
-import com.example.qrcodeapp.domain.model.History
 import com.example.qrcodeapp.domain.repository.HistoryCreateRepository
-import com.example.qrcodeapp.domain.repository.HistoryRepository
 
 class SaveHistoryCreateUseCase(
     private val repository: HistoryCreateRepository
@@ -13,8 +11,8 @@ class SaveHistoryCreateUseCase(
         require(data.isNotBlank()) { "data cannot be empty" }
         require(dateCreated.toString().isNotBlank()) { "dateCreated cannot be empty" }
 
-        repository.saveHistoryCreate(
+       /* repository.saveHistoryCreate(
             History(imageRes = resId, data = data, createdAt = dateCreated)
-        )
+        )*/
     }
 }

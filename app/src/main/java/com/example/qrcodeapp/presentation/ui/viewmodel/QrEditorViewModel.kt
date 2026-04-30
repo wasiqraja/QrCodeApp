@@ -1,13 +1,16 @@
 package com.example.qrcodeapp.presentation.ui.viewmodel
 
 import android.app.Application
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.net.Uri
 import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.qrcodeapp.R
+import com.example.qrcodeapp.core.utils.Constants.isWebsite
 import com.example.qrcodeapp.core.utils.logEvent
 import com.example.qrcodeapp.core.utils.model.Dots
 import com.example.qrcodeapp.core.utils.model.Eyes
@@ -26,6 +29,8 @@ import com.example.qrcodeapp.domain.model.ValidationResult
 import com.example.qrcodeapp.domain.usecase.ApplyTemplateUseCase
 import com.example.qrcodeapp.domain.usecase.BarCodeShowUseCase
 import com.example.qrcodeapp.domain.usecase.CameraUseCase
+import com.example.qrcodeapp.domain.usecase.DeleteHistoryUseCase
+import com.example.qrcodeapp.domain.usecase.FavouriteUseCase
 import com.example.qrcodeapp.domain.usecase.FetchHistoryCreateUseCase
 import com.example.qrcodeapp.domain.usecase.FetchHistoryUseCase
 import com.example.qrcodeapp.domain.usecase.GenerateBarCodeUseCase
@@ -45,11 +50,21 @@ import com.github.alexzhirkevich.customqrgenerator.style.QrFrameShape
 import com.github.alexzhirkevich.customqrgenerator.style.QrLogoPadding
 import com.github.alexzhirkevich.customqrgenerator.style.QrLogoShape
 import com.github.alexzhirkevich.customqrgenerator.style.QrPixelShape
+import com.google.mlkit.vision.barcode.BarcodeScanner
+import com.google.mlkit.vision.barcode.common.Barcode
+import com.google.mlkit.vision.common.InputImage
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.MultiFormatWriter
+import com.journeyapps.barcodescanner.BarcodeEncoder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class QrEditorViewModel(
     private val applyTemplateUseCase: ApplyTemplateUseCase,
@@ -58,11 +73,15 @@ class QrEditorViewModel(
     private val generateBarCodeUseCase: GenerateBarCodeUseCase,
     private val saveHistoryUseCase: SaveHistoryUseCase,
     private val fetchHistoryUseCase: FetchHistoryUseCase,
+    private val deleteHistoryUseCase: DeleteHistoryUseCase,
     private val saveHistoryCreateUseCase: SaveHistoryCreateUseCase,
     private val fetchHistoryCreateUseCase: FetchHistoryCreateUseCase,
+    private val favouriteUseCase: FavouriteUseCase,
     private val cameraUseCase: CameraUseCase,
     application: Application
 ) : AndroidViewModel(application) {
+
+    private var lastInsertedId: Long = -1
 
     private var qrGenerator: QrCodeGenerator? = null
 
@@ -88,11 +107,32 @@ class QrEditorViewModel(
     private val _cameraText = MutableStateFlow<String?>(null)
     val cameraText = _cameraText
 
+    private val _camera = MutableStateFlow<androidx.camera.core.Camera?>(null)
+    val camera: StateFlow<androidx.camera.core.Camera?> = _camera
+
     private val _qrCodeList = MutableStateFlow<List<QrCode>>(emptyList())
     val qrCodeList: StateFlow<List<QrCode>> = _qrCodeList
 
     private val _historyList = MutableStateFlow<List<History>>(emptyList())
     val historyList: StateFlow<List<History>> = _historyList
+
+
+    val qrList: StateFlow<List<History>> = _historyList
+        .map { list -> list.filter { it.type == "QR" } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val barcodeList: StateFlow<List<History>> = _historyList
+        .map { list -> list.filter { it.type == "BARCODE" } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val qrListFav: StateFlow<List<History>> = _historyList
+        .map { list -> list.filter { it.type == "QR" && it.isFavourite } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val barcodeListFav: StateFlow<List<History>> = _historyList
+        .map { list -> list.filter { it.type == "BARCODE" && it.isFavourite } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
 
 
     private val _socialModel = MutableStateFlow<CreateQRCodeSocialModel?>(null)
@@ -113,16 +153,43 @@ class QrEditorViewModel(
         qrGenerator = QrCodeGenerator(application, threadPolicy)
     }
 
+
+    fun resetText() {
+        _cameraText.value = null
+    }
+
+    fun setText(text: String?) {
+        _cameraText.value = text
+    }
+
     fun setSocialModel(model: CreateQRCodeSocialModel) {
         _socialModel.value = model
     }
 
-    suspend fun initQrDrawable(callback: (Bitmap?) -> Unit) {
+    suspend fun initQrDrawable(text: String, callback: (Bitmap?) -> Unit) {
 
         //qrData = QrData.Text("https://raja.com/")
-        qrData = QrData.Text("https://www.activebarcode.com/barcode/")
+        qrData = QrData.Text(text)
         val options = createQrOptions(1024, 1024, .125f) {}
         val bitmap = qrGenerator?.generateQrCodeSuspend(qrData, options)
+        callback(bitmap)
+    }
+
+    suspend fun initBarcodeDrawable(text: String, callback: (Bitmap?) -> Unit) {
+        val bitmap = withContext(Dispatchers.Default) {
+            try {
+                val bitMatrix = MultiFormatWriter().encode(
+                    text,
+                    BarcodeFormat.CODE_128,
+                    1024,
+                    1024
+                )
+                BarcodeEncoder().createBitmap(bitMatrix)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
+            }
+        }
         callback(bitmap)
     }
 
@@ -137,9 +204,61 @@ class QrEditorViewModel(
     }
 
 
+    fun initCamera(cameraModel: CameraModel) {
+        viewModelScope.launch {
+            _camera.value = cameraUseCase.initCamera(cameraModel).camera
+
+
+            //Log.d("TAGCAM", "initCamera: ${cam.camera}")
+        }
+    }
+
+    fun takeImage(cameraModel: CameraModel) {
+        viewModelScope.launch {
+            _cameraText.value = cameraUseCase.takeImage(cameraModel).data
+        }
+    }
+
+    fun getTextFromImage(
+        scanner: BarcodeScanner, uri: Uri, context: Context,
+        onResult: (String?) -> Unit
+    ) {
+        val inputImage = InputImage.fromFilePath(context, uri)
+        Log.d("VTAG", "display value=> TOP: ")
+
+        scanner.process(inputImage).addOnSuccessListener { barcode ->
+            if (barcode.isNotEmpty()) {
+                Log.d("VTAG", "display value=> $barcode: ")
+                onResult(barcode[0].displayValue)
+            }
+        }.addOnFailureListener {
+            Log.d("VTAG", "display value=> FAILURE: ")
+            onResult(null)
+        }
+    }
+
+    private fun checkScannedBarcode(code: Barcode, onResult: (String?) -> Unit) {
+
+
+        Log.d("VTAG", "https://www.google.com/search?q=${code.displayValue} ")
+        if ((code.displayValue?.isWebsite() == true || code.valueType == 5)) {
+            val isBarcode = code.valueType == 5
+            val url =
+                if (code.valueType == 5) "https://www.google.com/search?q=${code.displayValue}"
+                else code.displayValue
+            Log.d("TAGHJ", "${isBarcode} ${url}")
+
+            onResult(url)
+
+        } else {
+            onResult(null)
+        }
+
+    }
+
     fun startCameraUseCase(cameraModel: CameraModel) {
         viewModelScope.launch {
-            _cameraText.value = cameraUseCase(cameraModel)
+            _cameraText.value = cameraUseCase(cameraModel).data
         }
     }
 
@@ -270,15 +389,36 @@ class QrEditorViewModel(
     }
 
 
-    fun save(resId: Int, data: String, dateCreated: Long) {
+    fun save(history: History) {
         viewModelScope.launch {
             try {
-                saveHistoryUseCase(resId = resId, data = data, dateCreated = dateCreated)
+                lastInsertedId = saveHistoryUseCase(history)
             } catch (e: IllegalArgumentException) {
                 // handle validation error → show to UI
             }
         }
     }
+
+    fun delete() {
+        viewModelScope.launch {
+            deleteHistoryUseCase(lastInsertedId)
+        }
+    }
+
+    fun favourite(isFav: Boolean, favStatus: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val status=favouriteUseCase(lastInsertedId.toInt(), isFav)
+            //favStatus.invoke(status)
+            favStatus(status)
+        }
+    }
+
+    fun updateFav(id:Int){
+        viewModelScope.launch {
+            favouriteUseCase(id,true)
+        }
+    }
+
 
     fun fetchHistory() {
         viewModelScope.launch {

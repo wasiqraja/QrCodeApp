@@ -11,6 +11,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -22,7 +23,10 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -30,6 +34,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,14 +55,19 @@ import androidx.navigation.NavController
 import com.example.qrcodeapp.R
 import com.example.qrcodeapp.core.utils.AddHeight
 import com.example.qrcodeapp.core.utils.AddWidth
+import com.example.qrcodeapp.core.utils.Constants
+import com.example.qrcodeapp.domain.model.History
 import com.example.qrcodeapp.presentation.navigation.CameraScreen
+import com.example.qrcodeapp.presentation.navigation.HistoryScreen
+import com.example.qrcodeapp.presentation.ui.viewmodel.QrEditorViewModel
 
 
 @Composable
-fun HomeScreen(navController: NavController) {
+fun HomeScreen(navController: NavController, viewModel: QrEditorViewModel) {
 
 
     val context = LocalContext.current
+    val historyList = viewModel.historyList.collectAsState().value
 
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -68,6 +79,9 @@ fun HomeScreen(navController: NavController) {
         }
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.fetchHistory()
+    }
 
 
     Column(
@@ -139,12 +153,13 @@ fun HomeScreen(navController: NavController) {
                 iconRes = R.drawable.scan_qr_code_home_icon, // Replace with your drawable
                 backgroundColor = Color(0xFFFF6D00),
                 onClick = {
-
+                    Constants.isFrom="qr"
                     when {
                         ContextCompat.checkSelfPermission(
                             context,
                             Manifest.permission.CAMERA
                         ) == PackageManager.PERMISSION_GRANTED -> {
+
                             navController.navigate(CameraScreen)
                         }
 
@@ -161,7 +176,22 @@ fun HomeScreen(navController: NavController) {
                 subtitle = "scan",
                 iconRes = R.drawable.scan_bar_code_home_icon, // Replace with your drawable
                 backgroundColor = Color(0xFFFF6D00), // Orange
-                onClick = { /* Navigate to QR Scanner */ }
+                onClick = {
+                    Constants.isFrom="bar"
+                    when {
+                        ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.CAMERA
+                        ) == PackageManager.PERMISSION_GRANTED -> {
+
+                            navController.navigate(CameraScreen)
+                        }
+
+                        else -> {
+                            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                        }
+                    }
+                }
             )
         }
         AddHeight(8)
@@ -185,23 +215,124 @@ fun HomeScreen(navController: NavController) {
 
         AddHeight(10)
 
-        EmptyRecentScansCard(
-            fontFamily = FontFamily(Font(R.font.visbycf_demibold)),
-            onStartScanningClick = {
+        if (historyList.isEmpty()) {
+            EmptyRecentScansCard(
+                fontFamily = FontFamily(Font(R.font.visbycf_demibold)),
+                onStartScanningClick = {
 
+                }
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .offset(y = (-14).dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(painter = painterResource(R.drawable.zig_zag_home_icon), "")
             }
-        )
+        } else {
 
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .offset(y = (-14).dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Image(painter = painterResource(R.drawable.zig_zag_home_icon), "")
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            )
+            {
+                items(historyList, key = { it.id }) { item ->
+                    HistoryItem(
+                        item = item,
+                        onFavClick = {
+                            viewModel.updateFav(item.id)
+                            navController.navigate(HistoryScreen)
+                        }
+                    )
+                }
+            }
         }
 
 
+    }
+}
+
+
+@Composable
+fun HistoryItem(
+    item: History,
+    onFavClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceBright),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            // QR Icon Box
+            Box(
+                modifier = Modifier
+                    .size(42.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.surfaceBright,
+                        shape = RoundedCornerShape(10.dp)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = if (item.type == "QR") painterResource(R.drawable.qr_icon) else painterResource(
+                        R.drawable.bar_code_icon
+                    ),
+                    contentDescription = item.type,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            // URL + Date
+            Column(modifier = Modifier.weight(1f)) {
+
+                Text(
+                    text = item.resultedText,
+                    fontSize = 13.sp,
+                    fontFamily = FontFamily(Font(R.font.visbycf_demibold)),
+                    color = MaterialTheme.colorScheme.primary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(end = 2.dp)
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = item.dateString,
+                    fontSize = 12.sp,
+                    fontFamily = FontFamily(Font(R.font.visbycf_medium)),
+                    color = MaterialTheme.colorScheme.secondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(end = 2.dp)
+                )
+            }
+
+            // Fav Button
+            Image(
+                painter = if (item.isFavourite) {
+                    painterResource(R.drawable.fav_filled_icon)
+                } else {
+                    painterResource(R.drawable.fav_un_filled_icon)
+                },
+                contentDescription = "Favourite",
+                modifier = Modifier
+                    .size(22.dp)
+                    .clickable {
+                        onFavClick()
+                    }
+            )
+
+        }
     }
 }
 
@@ -212,7 +343,7 @@ fun ScanOptionCard(
     subtitle: String,
     iconRes: Int,
     backgroundColor: Color,
-    modifier: Modifier = Modifier, // Add this parameter
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     Card(
@@ -301,8 +432,7 @@ fun CreateQRMenuItem(
             .height(80.dp)
             .clip(RoundedCornerShape(24.dp))
             .clickable { onClick() },
-        colors =
-            CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceBright)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceBright)
     )
     {
         Row(

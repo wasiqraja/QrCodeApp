@@ -12,8 +12,8 @@ class HistoryRepositoryImpl(
     private val dao: HistoryDao
 ) : HistoryRepository {
 
-    override suspend fun saveHistory(history: History) {
-        dao.insertHistory(history.toEntity())
+    override suspend fun saveHistory(history: History): Long {
+        return dao.insertHistory(history.toEntity())
     }
 
     override fun getAllHistory(): Flow<List<History>> {
@@ -22,11 +22,16 @@ class HistoryRepositoryImpl(
         }
     }
 
-    override suspend fun deleteHistory(history: History) {
-        dao.deleteHistory(history.toEntity())
+    override suspend fun deleteHistory(lastId: Long) {
+        dao.deleteHistoryById(lastId)
     }
 
     override suspend fun deleteAllHistory() {
         dao.deleteAllHistory()
+    }
+
+    override suspend fun updateFavourite(id: Int, isFav: Boolean): Boolean {
+        dao.updateFavourite(id)
+        return dao.getFavouriteStatus(id)
     }
 }

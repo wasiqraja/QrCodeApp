@@ -26,4 +26,17 @@ data object SocialDetailScreen
 data object CameraScreen
 
 
+@Serializable
+data object QRResultScreen
+
+
+
+@Serializable
+data object BarCodeResultScreen
+
+
+@Serializable
+data object HistoryScreen
+
+
 

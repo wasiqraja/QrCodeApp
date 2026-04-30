@@ -22,6 +22,8 @@ import com.example.qrcodeapp.domain.repository.TemplateRepository
 import com.example.qrcodeapp.domain.usecase.ApplyTemplateUseCase
 import com.example.qrcodeapp.domain.usecase.BarCodeShowUseCase
 import com.example.qrcodeapp.domain.usecase.CameraUseCase
+import com.example.qrcodeapp.domain.usecase.DeleteHistoryUseCase
+import com.example.qrcodeapp.domain.usecase.FavouriteUseCase
 import com.example.qrcodeapp.domain.usecase.FetchHistoryCreateUseCase
 import com.example.qrcodeapp.domain.usecase.FetchHistoryUseCase
 import com.example.qrcodeapp.domain.usecase.GenerateBarCodeUseCase
@@ -42,7 +44,9 @@ val appModule = module {
             get(),
             get(),
             get(),
+            get(),
             get(), get(), get(),
+            get(),
             get()
         )
     }
@@ -72,7 +76,7 @@ val appModule = module {
 
     single<GenerateBarCodeRepository> { BarCodeGenerateRepositoryImpl() }
 
-    single<CameraRepository> { CameraRepositoryImpl() }
+    single<CameraRepository> { CameraRepositoryImpl(get()) }
 
     factory { CameraUseCase(get()) }
     factory { GenerateBarCodeUseCase(get()) }
@@ -98,6 +102,8 @@ val appModule = module {
     // ✅ UseCases
     factory { SaveHistoryUseCase(repository = get()) }
     factory { FetchHistoryUseCase(repository = get()) }
+    factory { DeleteHistoryUseCase(repository = get()) }
+    factory { FavouriteUseCase(repository = get()) }
 
     // ✅ Repository — inject dao into impl
     single<HistoryCreateRepository> {

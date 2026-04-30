@@ -7,8 +7,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -16,7 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -26,17 +24,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.qrcodeapp.domain.model.History
 import com.example.qrcodeapp.presentation.ui.viewmodel.QrEditorViewModel
 
 @Composable
-fun HistoryScreen(navController: NavController, viewModel: QrEditorViewModel) {
+fun FavoriteScreen(navController: NavController, viewModel: QrEditorViewModel) {
 
-    val tabs = listOf("All", "QR Codes", "Barcodes")
-    var selectedTab by remember { mutableStateOf(0) }
-    val historyList = viewModel.historyList.collectAsState().value
-    val qrList = viewModel.qrList.collectAsState().value
-    val barCodeList = viewModel.barcodeList.collectAsState().value
+    val tabs = listOf("QR Codes", "Barcodes")
+    var selectedTab by remember { mutableIntStateOf(0) }
+    val qrList = viewModel.qrListFav.collectAsState().value
+    val barCodeList = viewModel.barcodeListFav.collectAsState().value
 
     Column(
         modifier = Modifier
@@ -93,34 +89,15 @@ fun HistoryScreen(navController: NavController, viewModel: QrEditorViewModel) {
 
         when (selectedTab) {
             0 -> {
-                AllHistoryScreen(historyList, viewModel)
-            }
-
-            1 -> {
                 AllHistoryScreen(qrList, viewModel)
             }
 
-            2 -> {
+            1 -> {
                 AllHistoryScreen(barCodeList, viewModel)
             }
+
+
         }
     }
 }
 
-@Composable
-fun AllHistoryScreen(historyList: List<History>, viewModel: QrEditorViewModel) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    )
-    {
-        items(historyList, key = { it.id }) { item ->
-            HistoryItem(
-                item = item,
-                onFavClick = {
-                    viewModel.updateFav(item.id)
-                }
-            )
-        }
-    }
-}

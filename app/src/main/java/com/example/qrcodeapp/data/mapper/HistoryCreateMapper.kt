@@ -6,17 +6,21 @@ import com.example.qrcodeapp.domain.model.History
 fun HistoryCreateEntity.toDomain(): History {
     return History(
         id = this.id,
-        data = this.data,
-        imageRes = this.imageRes,
-        createdAt = this.createdAt
+        originalString = this.originalString,
+        resultedText = this.resultedText,
+        type = this.type,
+        dateString = this.dateString,
+        isFavourite = this.isFavourite
     )
 }
 
 fun History.toEntityCreate(): HistoryCreateEntity {
     return HistoryCreateEntity(
         id = this.id,
-        data = this.data,
-        imageRes = this.imageRes,
-        createdAt = this.createdAt
+        originalString = this.dateString,
+        resultedText = this.resultedText,
+        type = this.type,
+        dateString = this.dateString,
+        isFavourite = this.isFavourite
     )
 }

@@ -48,9 +48,7 @@ fun SplashScreen(viewModel: QrEditorViewModel, navController: NavController) {
         verticalArrangement = Arrangement.Center
     ) {
 
-        Text(text = "Scan History Add", modifier = Modifier.clickable {
-            viewModel.save(R.drawable.ic_youtube, "You tube link", System.currentTimeMillis())
-        })
+
 
         Text(text = "Create History Add", modifier = Modifier.clickable {
             viewModel.saveCreate(R.drawable.sca, "snap tube link", System.currentTimeMillis())

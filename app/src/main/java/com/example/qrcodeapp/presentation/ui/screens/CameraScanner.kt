@@ -1,20 +1,11 @@
 package com.example.qrcodeapp.presentation.ui.screens
 
-import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Paint
-import android.graphics.PorterDuff
-import android.graphics.PorterDuffXfermode
-import android.graphics.Rect
-import android.media.Image
+import android.net.Uri
 import android.util.Log
-import androidx.annotation.OptIn
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
-import androidx.camera.core.ExperimentalGetImage
-import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.Preview
-import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -56,74 +47,107 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.content.ContextCompat
-import androidx.core.graphics.createBitmap
-import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.navigation.NavController
+import androidx.navigation.NavGraph
 import com.example.qrcodeapp.R
-import com.example.qrcodeapp.core.utils.Constants.cam
-import com.example.qrcodeapp.core.utils.Constants.isWebsite
-import com.example.qrcodeapp.core.utils.ImageUtils
+import com.example.qrcodeapp.core.utils.Constants
 import com.example.qrcodeapp.core.utils.custom.CustomQRViewJava
+import com.example.qrcodeapp.core.utils.imageAnalysis
+import com.example.qrcodeapp.core.utils.imageCapture
 import com.example.qrcodeapp.domain.model.CameraModel
+import com.example.qrcodeapp.presentation.navigation.BarCodeResultScreen
+import com.example.qrcodeapp.presentation.navigation.QRResultScreen
 import com.example.qrcodeapp.presentation.ui.viewmodel.QrEditorViewModel
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.barcode.BarcodeScanning
-import com.google.mlkit.vision.barcode.common.Barcode
-import com.google.mlkit.vision.common.InputImage
-import java.util.concurrent.Executors
-import kotlin.math.abs
 
 @Composable
 fun CameraScreen(
-    qrEditorViewModel: QrEditorViewModel,
-    onScanResult: (String) -> Unit
+    qrEditorViewModel: QrEditorViewModel,navController: NavController
 ) {
 
-    /* val context = LocalContext.current
-     val lifecycleOwner = LocalLifecycleOwner.current
-     var previewViewRef by remember { mutableStateOf<PreviewView?>(null) }
-     var viewFinderRef by remember { mutableStateOf<CustomQRViewJava?>(null) }
-     val text = qrEditorViewModel.cameraText.collectAsState().value
-
-     LaunchedEffect(text) {
-         logEvent("camera : ${text.toString()}")
-     }
-
-
-     Box(modifier = Modifier.fillMaxSize()) {
-
-         AndroidView(
-             factory = { ctx ->
-                 PreviewView(ctx).apply {
-                     scaleType = PreviewView.ScaleType.FILL_CENTER
-                     previewViewRef = this
-                 }
-             },
-             modifier = Modifier.fillMaxSize()
-         )
-
-         AndroidView(
-             factory = { ctx ->
-                 CustomQRViewJava(ctx).apply {
-                     viewFinderRef = this
-                 }
-             },
-             modifier = Modifier.fillMaxSize()
-         )
-
-     }*/
-
+    var cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+    val scanner: BarcodeScanner by lazy { BarcodeScanning.getClient() }
 
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     var previewViewRef by remember { mutableStateOf<PreviewView?>(null) }
     var viewFinderRef by remember { mutableStateOf<CustomQRViewJava?>(null) }
     val text = qrEditorViewModel.cameraText.collectAsState().value
+    val cameraObj = qrEditorViewModel.camera.collectAsState().value
+
 
     var isFlashOn by remember { mutableStateOf(false) }
     var zoomLevel by remember { mutableFloatStateOf(0f) }
 
+
+    LaunchedEffect(previewViewRef, viewFinderRef) {
+        if (previewViewRef != null && viewFinderRef != null) {
+            /*startCameraXCompose(
+                context = context,
+                lifecycleOwner = lifecycleOwner,
+                previewView = previewViewRef!!,
+                viewFinder = viewFinderRef!!,
+                onScanResult = onScanResult
+            )
+            */
+
+            qrEditorViewModel.initCamera(
+                CameraModel(
+                    context,
+                    lifecycleOwner,
+                    previewViewRef!!,
+                    viewFinderRef!!,
+                    CameraSelector.DEFAULT_BACK_CAMERA,
+                    imageCapture = imageCapture,
+                    imageAnalysis = imageAnalysis
+                )
+            )
+
+            qrEditorViewModel.startCameraUseCase(
+                CameraModel(
+                    context,
+                    lifecycleOwner,
+                    previewViewRef!!,
+                    viewFinderRef!!,
+                    CameraSelector.DEFAULT_BACK_CAMERA,
+                    imageCapture = imageCapture,
+                    imageAnalysis = imageAnalysis
+                )
+            )
+
+
+        }
+    }
+
+    val pickImagesLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+
+        uri?.let {
+            qrEditorViewModel.getTextFromImage(scanner, uri, context){
+
+                Log.d("VTAG", "CameraScreen: ${it}")
+                qrEditorViewModel.setText(it)
+                if (Constants.isFrom=="qr"){
+                    navController.navigate(QRResultScreen)
+                }else {
+                    navController.navigate(BarCodeResultScreen)
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(text) {
+        if (text!=null){
+            if (Constants.isFrom=="qr"){
+                navController.navigate(QRResultScreen)
+            }else {
+                navController.navigate(BarCodeResultScreen)
+            }
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
 
@@ -134,8 +158,7 @@ fun CameraScreen(
                     scaleType = PreviewView.ScaleType.FILL_CENTER
                     previewViewRef = this
                 }
-            },
-            modifier = Modifier.fillMaxSize()
+            }, modifier = Modifier.fillMaxSize()
         )
 
 
@@ -144,8 +167,7 @@ fun CameraScreen(
                 CustomQRViewJava(ctx).apply {
                     viewFinderRef = this
                 }
-            },
-            modifier = Modifier.fillMaxSize()
+            }, modifier = Modifier.fillMaxSize()
         )
 
 
@@ -156,7 +178,8 @@ fun CameraScreen(
                 .padding(horizontal = 16.dp, vertical = 12.dp)
                 .align(Alignment.TopCenter),
             verticalAlignment = Alignment.CenterVertically
-        ) {
+        )
+        {
             // Back button
             Box(
                 modifier = Modifier
@@ -192,15 +215,14 @@ fun CameraScreen(
                     .clip(CircleShape)
                     .clickable {
                         if (!isFlashOn) {
-                            isFlashOn=true
-                            cam?.cameraControl?.enableTorch(true)
-                        }else{
-                            isFlashOn=false
-                            cam?.cameraControl?.enableTorch(false)
+                            isFlashOn = true
+                            cameraObj?.cameraControl?.enableTorch(true)
+                        } else {
+                            isFlashOn = false
+                            cameraObj?.cameraControl?.enableTorch(false)
                         }
 
-                    },
-                contentAlignment = Alignment.Center
+                    }, contentAlignment = Alignment.Center
             ) {
                 Icon(
                     painter = if (isFlashOn) painterResource(R.drawable.flash_off_icon) else painterResource(
@@ -230,56 +252,16 @@ fun CameraScreen(
                 .fillMaxWidth()
                 .navigationBarsPadding()
                 .padding(bottom = 24.dp)
-                .align(Alignment.BottomCenter),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-
-            /*// Zoom Slider
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 32.dp),
-                verticalAlignment = Alignment.CenterVertically
-            )
-            {
-                Icon(
-                    painter = painterResource(R.drawable.zoom_out_icon),
-                    contentDescription = "Zoom Out",
-                    tint = Color.White,
-                    modifier = Modifier.size(30.dp)
-                )
-                Slider(
-                    value = zoomLevel,
-                    onValueChange = {
-                        zoomLevel = it
-                        // qrEditorViewModel.setZoom(it)
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(horizontal = 8.dp),
-                    colors = SliderDefaults.colors(
-                        thumbColor = Color.White,
-                        activeTrackColor = Color(0xFF4268FF),
-                        inactiveTrackColor = Color.White.copy(alpha = 0.3f)
-                    )
-                )
-                Icon(
-                    painter = painterResource(R.drawable.zoom_in_icon),
-                    contentDescription = "Zoom In",
-                    tint = Color.White,
-                    modifier = Modifier.size(30.dp)
-                )
-            }*/
-
+                .align(Alignment.BottomCenter), horizontalAlignment = Alignment.CenterHorizontally
+        )
+        {
 
 
             ZoomSeekBar(
-                zoomLevel = zoomLevel,
-                onZoomChange = {
+                zoomLevel = zoomLevel, onZoomChange = {
                     zoomLevel = it
                     // qrEditorViewModel.setZoom(it)
-                },
-                modifier = Modifier.fillMaxWidth()
+                }, modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -297,8 +279,15 @@ fun CameraScreen(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(CircleShape)
-                        .clickable { /* openGallery() */ },
-                    contentAlignment = Alignment.Center
+                        .clickable {
+
+                            pickImagesLauncher.launch(
+                                PickVisualMediaRequest(
+                                    ActivityResultContracts.PickVisualMedia.ImageOnly
+                                )
+                            )
+
+                        }, contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.gallery_icon),
@@ -312,42 +301,52 @@ fun CameraScreen(
                     painter = painterResource(R.drawable.cam_capture_icon),
                     contentDescription = "Flip Camera",
                     tint = Color.White,
-                    modifier = Modifier.size(72.dp)
+                    modifier = Modifier
+                        .size(72.dp)
+                        .clickable {
+                            qrEditorViewModel.takeImage(
+                                CameraModel(
+                                    context,
+                                    lifecycleOwner,
+                                    previewViewRef!!,
+                                    viewFinderRef!!,
+                                    CameraSelector.DEFAULT_BACK_CAMERA,
+                                    imageCapture = imageCapture,
+                                    imageAnalysis = imageAnalysis
+
+                                )
+                            )
+                        }
                 )
-
-                /* // Capture / Shutter button
-                 Box(
-                     modifier = Modifier
-                         .size(72.dp)
-                         .clip(CircleShape)
-                         .background(Color.White),
-                     contentAlignment = Alignment.Center
-                 )
-                 {
-
-                     Icon(
-                         painter = painterResource(R.drawable.cam_capture_icon),
-                         contentDescription = "Flip Camera",
-                         tint = Color.White,
-                         modifier = Modifier.size(72.dp)
-                     )
-
-                     Box(
-                         modifier = Modifier
-                             .size(60.dp)
-                             .clip(CircleShape)
-                             .background(Color.White)
-                             .border(2.dp, Color.Black.copy(alpha = 0.2f), CircleShape)
-                             .clickable { *//* captureImage() *//* }
-                    )
-                }*/
 
                 // Rotate / Flip camera
                 Box(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(CircleShape)
-                        .clickable { /* qrEditorViewModel.flipCamera() */ },
+                        .clickable {
+
+                            if (isFlashOn) {
+                                isFlashOn = false
+                                cameraObj?.cameraControl?.enableTorch(false)
+                            }
+
+                            cameraSelector =
+                                if (cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA) CameraSelector.DEFAULT_FRONT_CAMERA
+                                else CameraSelector.DEFAULT_BACK_CAMERA
+
+                            qrEditorViewModel.initCamera(
+                                CameraModel(
+                                    context,
+                                    lifecycleOwner,
+                                    previewViewRef!!,
+                                    viewFinderRef!!,
+                                    cameraSelector,
+                                    imageCapture = imageCapture,
+                                    imageAnalysis = imageAnalysis
+                                )
+                            )
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -361,35 +360,14 @@ fun CameraScreen(
         }
     }
 
-    LaunchedEffect(previewViewRef, viewFinderRef) {
-        if (previewViewRef != null && viewFinderRef != null) {
-            /*startCameraXCompose(
-                context = context,
-                lifecycleOwner = lifecycleOwner,
-                previewView = previewViewRef!!,
-                viewFinder = viewFinderRef!!,
-                onScanResult = onScanResult
-            )
-            */
-            qrEditorViewModel.startCameraUseCase(
-                CameraModel(
-                    context,
-                    lifecycleOwner,
-                    previewViewRef!!,
-                    viewFinderRef!!
-                )
-            )
-        }
-    }
+
 }
 
 
 @kotlin.OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ZoomSeekBar(
-    zoomLevel: Float,
-    onZoomChange: (Float) -> Unit,
-    modifier: Modifier = Modifier
+    zoomLevel: Float, onZoomChange: (Float) -> Unit, modifier: Modifier = Modifier
 ) {
     Row(
         modifier = modifier
@@ -403,9 +381,7 @@ fun ZoomSeekBar(
         // ── Left Icon ──────────────────────────────────────────────
         Icon(
             painter = painterResource(R.drawable.zoom_out_icon),       // replace later
-            contentDescription = "Zoom Out",
-            tint = Color.White,
-            modifier = Modifier.size(18.dp)
+            contentDescription = "Zoom Out", tint = Color.White, modifier = Modifier.size(18.dp)
         )
 
         // ── Slider ─────────────────────────────────────────────────
@@ -426,8 +402,7 @@ fun ZoomSeekBar(
             thumb = {
                 // invisible thumb — clean line look
                 Spacer(modifier = Modifier.size(0.dp))
-            }
-        )
+            })
 
         // ── Right Icon ─────────────────────────────────────────────
         Icon(
@@ -439,115 +414,3 @@ fun ZoomSeekBar(
     }
 }
 
-
-@OptIn(ExperimentalGetImage::class)
-private fun startCameraXCompose(
-    context: Context,
-    lifecycleOwner: LifecycleOwner,
-    previewView: PreviewView,
-    viewFinder: CustomQRViewJava,
-    onScanResult: (String) -> Unit
-) {
-    val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
-    val cameraExecutor = Executors.newSingleThreadExecutor()
-    val scanner: BarcodeScanner by lazy { BarcodeScanning.getClient() }
-
-    cameraProviderFuture.addListener({
-        val cameraProvider = cameraProviderFuture.get()
-
-        // 1. Preview
-        val preview = Preview.Builder().build().also {
-            it.surfaceProvider = previewView.surfaceProvider
-        }
-
-        // 2. Image Analysis
-        val imageAnalysis = ImageAnalysis.Builder()
-            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-            .build()
-
-        imageAnalysis.setAnalyzer(cameraExecutor) { imageProxy ->
-            val image: Image = imageProxy.image!!
-
-            val rectangle = viewFinder.frameRect
-            val bitmap = ImageUtils.convertYuv420888ImageToBitmap(image) {}
-
-            val bitmapCropped = rectangle?.let {
-                getCroppedBitmap(bitmap, it, viewFinder)
-            }
-
-            bitmap.recycle()
-
-            if (bitmapCropped != null) {
-                val inp = InputImage.fromBitmap(bitmapCropped, 180)
-                scanner.process(inp).addOnSuccessListener { barcode ->
-                    Log.d("TAG", "startCameraXdbug:::barcode====$barcode: ")
-
-                    bitmapCropped.recycle()
-                    if (barcode.isNotEmpty()) {
-                        checkScannedBarcode(barcode[0])
-                        imageProxy.close()
-                    } else imageProxy.close()
-                }.addOnFailureListener {
-
-                    bitmapCropped.recycle()
-                    imageProxy.close()
-                }
-            }
-        }
-
-        // 3. Bind to Lifecycle
-        try {
-            cameraProvider.unbindAll()
-            cameraProvider.bindToLifecycle(
-                lifecycleOwner,
-                CameraSelector.DEFAULT_BACK_CAMERA,
-                preview,
-                imageAnalysis
-            )
-        } catch (e: Exception) {
-            Log.e("CameraX", "Binding failed", e)
-        }
-    }, ContextCompat.getMainExecutor(context))
-}
-
-
-private fun getCroppedBitmap(
-    bitmap: Bitmap,
-    rectangle: com.example.qrcodeapp.core.utils.custom.Rect,
-    viewFinder: CustomQRViewJava
-): Bitmap {
-    val output = createBitmap(bitmap.width, bitmap.height)
-    val canvas = Canvas(output)
-    val color = -0xbdbdbe
-    val paint = Paint()
-    val rect = Rect(0, 0, bitmap.width, bitmap.height)
-    paint.isAntiAlias = true
-    canvas.drawARGB(0, 0, 0, 0)
-    paint.color = color
-
-    val screenWidth = viewFinder.measuredWidth
-    val constant: Float =
-        if (screenWidth < 720) 1.5f else if (screenWidth < 1000) 1.7f else if (screenWidth < 1400) 2f else 2.4f
-
-    val radius = abs(rectangle.left / constant - rectangle.right / constant)
-
-    canvas.drawCircle(
-        (bitmap.width / 2).toFloat(), (bitmap.height / 2).toFloat(), radius / constant, paint
-    )
-    paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_IN)
-    canvas.drawBitmap(bitmap, rect.left.toFloat(), rect.top.toFloat(), paint)
-    return output
-}
-
-private fun checkScannedBarcode(code: Barcode, fromGallery: Boolean = false) {
-
-    if ((code.displayValue?.isWebsite() == true || code.valueType == 5)) {
-        val isBarcode = code.valueType == 5
-        val url =
-            if (code.valueType == 5) "https://www.google.com/search?q=${code.displayValue}"
-            else code.displayValue
-
-        Log.d("SCANNER", "${isBarcode} ${url}")
-
-    }
-}

@@ -62,9 +62,9 @@ fun EditQrCodeScreen(viewModel: QrEditorViewModel) {
     val optionOne=remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        viewModel.initQrDrawable {
+        /*viewModel.initQrDrawable {
             bitmap.value = it
-        }
+        }*/
     }
 
 

@@ -20,6 +20,7 @@ object Constants {
     val canUserChangeScreen: MutableLiveData<Boolean> = MutableLiveData(true)
 
     var isFrom="qr"
+    var is_from_history_or_fav=false
 
     fun String.isWebsite(): Boolean {
         if (startsWith("http://") || startsWith("https://")) {

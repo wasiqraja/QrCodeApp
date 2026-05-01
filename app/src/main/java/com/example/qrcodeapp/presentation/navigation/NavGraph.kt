@@ -38,5 +38,8 @@ data object BarCodeResultScreen
 @Serializable
 data object HistoryScreen
 
+@Serializable
+data object FavouriteScreen
+
 
 

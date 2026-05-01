@@ -63,6 +63,7 @@ import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import com.example.qrcodeapp.R
 import com.example.qrcodeapp.core.utils.AddHeight
+import com.example.qrcodeapp.core.utils.Constants
 import com.example.qrcodeapp.core.utils.Constants.saveBitmapToDownloads
 import com.example.qrcodeapp.core.utils.copyToClipboard
 import com.example.qrcodeapp.core.utils.getFormattedDateTime
@@ -77,10 +78,10 @@ fun CameraQrResultScreen(viewModel: QrEditorViewModel, navController: NavControl
     val activity = LocalActivity.current
     val bitmap: MutableState<Bitmap?> = remember { mutableStateOf(null) }
     val text = viewModel.cameraText.collectAsState().value
+
     val isFav = remember { mutableStateOf(false) }
-
-
     val context = LocalContext.current
+    val hisFavNavModel = viewModel.historyFavNavModel.collectAsState()
 
     // Permission launcher (for Android 9 and below)
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -98,42 +99,55 @@ fun CameraQrResultScreen(viewModel: QrEditorViewModel, navController: NavControl
     }
 
     fun checkAndSaveBitmap() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            val hasPermission = ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
-            ) == PackageManager.PERMISSION_GRANTED
+        bitmap.value?.let {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                val hasPermission = ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+                ) == PackageManager.PERMISSION_GRANTED
 
-            if (hasPermission) {
+                if (hasPermission) {
+                    saveBitmapToDownloads(
+                        context,
+                        bitmap.value!!,
+                        "image_${System.currentTimeMillis()}.png"
+                    )
+                } else {
+                    permissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                }
+            } else {
+                // No permission needed for Android 10+
                 saveBitmapToDownloads(
                     context,
                     bitmap.value!!,
                     "image_${System.currentTimeMillis()}.png"
                 )
-            } else {
-                permissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
             }
-        } else {
-            // No permission needed for Android 10+
-            saveBitmapToDownloads(
-                context,
-                bitmap.value!!,
-                "image_${System.currentTimeMillis()}.png"
-            )
         }
     }
 
     BackHandler {
+        Constants.is_from_history_or_fav = false
+        viewModel.resetHisFavNav()
         viewModel.resetText()
         navController.navigateUp()
     }
 
     LaunchedEffect(Unit) {
-        text?.let {
-            viewModel.initQrDrawable(text) {
-                bitmap.value = it
-                viewModel.save(History(0, "abc", text!!, "QR", getFormattedDateTime(), false))
+        if (!Constants.is_from_history_or_fav) {
+            text?.let {
+                viewModel.initQrDrawable(text) {
+                    bitmap.value = it
+                    viewModel.save(History(0, "abc", text!!, "QR", getFormattedDateTime(), false))
 
+                }
+            }
+        } else {
+
+            hisFavNavModel.value?.resultText?.let {
+                viewModel.initQrDrawable(hisFavNavModel.value!!.resultText!!) {
+                    bitmap.value = it
+                }
             }
         }
     }
@@ -167,18 +181,27 @@ fun CameraQrResultScreen(viewModel: QrEditorViewModel, navController: NavControl
                 )
             }
 
-            Image(
-                painter = painterResource(R.drawable.del_icon),
-                contentDescription = "Home",
-                modifier = Modifier
-                    .size(26.dp)
-                    .clickable {
-                        isFav.value = false
-                        viewModel.delete()
-                        viewModel.resetText()
-                        navController.navigateUp()
-                    }
-            )
+            if (!Constants.is_from_history_or_fav) {
+                Image(
+                    painter = painterResource(R.drawable.del_icon),
+                    contentDescription = "Home",
+                    modifier = Modifier
+                        .size(26.dp)
+                        .clickable {
+                            isFav.value = false
+                            viewModel.delete()
+                            /* if (!Constants.is_from_history_or_fav) {
+                                 viewModel.delete()
+                             } else {
+                                 hisFavNavModel.value?.id?.let { id ->
+                                     viewModel.deleteHisFav(id)
+                                 }
+                             }*/
+                            viewModel.resetText()
+                            navController.navigateUp()
+                        }
+                )
+            }
 
         }
 
@@ -248,20 +271,42 @@ fun CameraQrResultScreen(viewModel: QrEditorViewModel, navController: NavControl
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                text?.let {
-                    Text(
-                        text = text,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontSize = 13.sp,
-                        fontFamily = FontFamily(Font(R.font.visbycf_demibold)),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(start = 2.dp, end = 2.dp)
-                    )
+                if (!Constants.is_from_history_or_fav) {
+                    text?.let {
+                        Text(
+                            text = text,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontSize = 13.sp,
+                            fontFamily = FontFamily(Font(R.font.visbycf_demibold)),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(start = 2.dp, end = 2.dp)
+                        )
+                    }
+                } else {
+
+                    hisFavNavModel.value?.resultText?.let {
+                        it
+                        Text(
+                            text = it,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontSize = 13.sp,
+                            fontFamily = FontFamily(Font(R.font.visbycf_demibold)),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(start = 2.dp, end = 2.dp)
+                        )
+                    }
+
                 }
 
+
                 Text(
-                    text = getFormattedDateTime(),
+                    text = if (!Constants.is_from_history_or_fav) {
+                        getFormattedDateTime()
+                    } else {
+                        hisFavNavModel.value?.dateTime.toString()
+                    },
                     color = MaterialTheme.colorScheme.secondary,
                     fontSize = 13.sp,
                     fontFamily = FontFamily(Font(R.font.visbycf_demibold)),
@@ -287,9 +332,20 @@ fun CameraQrResultScreen(viewModel: QrEditorViewModel, navController: NavControl
             Box(
                 modifier = Modifier
                     .clickable {
-                        viewModel.favourite(true, favStatus = {
-                            isFav.value = it
-                        })
+                        if (!Constants.is_from_history_or_fav) {
+                            viewModel.favourite(true, favStatus = {
+                                isFav.value = it
+                            })
+                        } else {
+                            hisFavNavModel.value?.id?.let {
+                                viewModel.favouriteFromHisFav(
+                                    true,
+                                    hisFavNavModel.value?.id!!,
+                                    favStatus = {
+                                        isFav.value = it
+                                    })
+                            }
+                        }
                     }
                     .padding(horizontal = 25.dp)
                     .weight(1f)
@@ -332,8 +388,14 @@ fun CameraQrResultScreen(viewModel: QrEditorViewModel, navController: NavControl
             Box(
                 modifier = Modifier
                     .clickable {
-                        text?.let {
-                            activity?.copyToClipboard(text)
+                        if (!Constants.is_from_history_or_fav) {
+                            text?.let {
+                                activity?.copyToClipboard(text)
+                            }
+                        } else {
+                            hisFavNavModel.value?.resultText?.let { it ->
+                                activity?.copyToClipboard(it)
+                            }
                         }
                     }
                     .padding(horizontal = 25.dp)

@@ -30,6 +30,9 @@ interface HistoryDao {
     @Query("DELETE FROM history_table")
     suspend fun deleteAllHistory()
 
+    @Query("DELETE FROM history_table WHERE id IN (:ids)")
+    suspend fun deleteSelectedHistory(ids: List<Int>)
+
     @Query("UPDATE history_table SET isFavourite = CASE WHEN isFavourite = 1 THEN 0 ELSE 1 END WHERE id = :id")
     suspend fun updateFavourite(id: Int)
 

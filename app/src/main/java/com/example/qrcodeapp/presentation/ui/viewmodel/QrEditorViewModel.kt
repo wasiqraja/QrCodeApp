@@ -5,15 +5,19 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.net.Uri
+import android.os.Build
 import android.util.Log
 import androidx.annotation.DrawableRes
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.qrcodeapp.R
 import com.example.qrcodeapp.core.utils.Constants.isWebsite
+import com.example.qrcodeapp.core.utils.SortOrder
 import com.example.qrcodeapp.core.utils.logEvent
 import com.example.qrcodeapp.core.utils.model.Dots
 import com.example.qrcodeapp.core.utils.model.Eyes
+import com.example.qrcodeapp.core.utils.model.HistoryFavNavModel
 import com.example.qrcodeapp.core.utils.model.LogoType
 import com.example.qrcodeapp.data.dto.QrType
 import com.example.qrcodeapp.data.local.entitiy.CreateQRCodeSocialModel
@@ -65,6 +69,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 class QrEditorViewModel(
     private val applyTemplateUseCase: ApplyTemplateUseCase,
@@ -95,6 +101,9 @@ class QrEditorViewModel(
 
 
     private lateinit var qrData: QrData.Text
+
+    private val _historyFavNavModel = MutableStateFlow<HistoryFavNavModel?>(null)
+    val historyFavNavModel = _historyFavNavModel
 
 
     private val _barCodeBitmap = MutableStateFlow<Bitmap?>(null)
@@ -134,7 +143,6 @@ class QrEditorViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
 
-
     private val _socialModel = MutableStateFlow<CreateQRCodeSocialModel?>(null)
     val socialModel: StateFlow<CreateQRCodeSocialModel?> = _socialModel
 
@@ -160,6 +168,14 @@ class QrEditorViewModel(
 
     fun setText(text: String?) {
         _cameraText.value = text
+    }
+
+    fun resetHisFavNav() {
+        _historyFavNavModel.value = null
+    }
+
+    fun setHisFavNav(value: HistoryFavNavModel?) {
+        _historyFavNavModel.value = value
     }
 
     fun setSocialModel(model: CreateQRCodeSocialModel) {
@@ -405,17 +421,38 @@ class QrEditorViewModel(
         }
     }
 
+    fun deleteHisFav(id:Int) {
+        viewModelScope.launch {
+            deleteHistoryUseCase(id.toLong())
+        }
+    }
+
+    fun deleteSelected(selectedItems: List<Int>) {
+        viewModelScope.launch {
+            deleteHistoryUseCase(selectedItems)
+        }
+    }
+
+
     fun favourite(isFav: Boolean, favStatus: (Boolean) -> Unit) {
         viewModelScope.launch {
-            val status=favouriteUseCase(lastInsertedId.toInt(), isFav)
+            val status = favouriteUseCase(lastInsertedId.toInt(), isFav)
             //favStatus.invoke(status)
             favStatus(status)
         }
     }
 
-    fun updateFav(id:Int){
+    fun favouriteFromHisFav(isFav: Boolean,id:Int ,favStatus: (Boolean) -> Unit) {
         viewModelScope.launch {
-            favouriteUseCase(id,true)
+            val status = favouriteUseCase(id, isFav)
+            //favStatus.invoke(status)
+            favStatus(status)
+        }
+    }
+
+    fun updateFav(id: Int) {
+        viewModelScope.launch {
+            favouriteUseCase(id, true)
         }
     }
 
@@ -424,6 +461,51 @@ class QrEditorViewModel(
         viewModelScope.launch {
             fetchHistoryUseCase.invoke().collectLatest {
                 _historyList.value = it
+                Log.d("TAGFV", "fetchHistory: ${_historyList.value.size}")
+            }
+        }
+    }
+
+    fun sortList(order: SortOrder) {
+        viewModelScope.launch {
+            _historyList.value = when (order) {
+                SortOrder.ASC -> _historyList.value.sortedBy { it.resultedText.lowercase() }
+                SortOrder.DESC -> _historyList.value.sortedByDescending { it.resultedText.lowercase() }
+            }
+
+            /* fetchHistoryUseCase.invoke().collectLatest {
+                 _historyList.value = when (order) {
+                     SortOrder.ASC -> it.sortedBy { it.resultedText.lowercase() }
+                     SortOrder.DESC -> it.sortedByDescending { it.resultedText.lowercase() }
+                 }
+             }*/
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun sortListViaDateAsc() {
+        viewModelScope.launch {
+            _historyList.value = historyList.value.sortedBy {
+                runCatching {
+                    LocalDateTime.parse(
+                        it.dateString,
+                        DateTimeFormatter.ofPattern("dd MMM • hh:mm a")
+                    )
+                }.getOrNull()
+            }
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun sortListViaDateDesc() {
+        viewModelScope.launch {
+            _historyList.value = historyList.value.sortedByDescending {
+                runCatching {
+                    LocalDateTime.parse(
+                        it.dateString,
+                        DateTimeFormatter.ofPattern("dd MMM • hh:mm a")
+                    )
+                }.getOrNull()
             }
         }
     }

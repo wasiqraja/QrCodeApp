@@ -13,8 +13,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.qrcodeapp.core.utils.Constants
 import com.example.qrcodeapp.presentation.navigation.BarCodeResultScreen
 import com.example.qrcodeapp.presentation.navigation.CameraScreen
+import com.example.qrcodeapp.presentation.navigation.FavouriteScreen
 import com.example.qrcodeapp.presentation.navigation.HistoryScreen
 import com.example.qrcodeapp.presentation.navigation.OnBoardingScreen
 import com.example.qrcodeapp.presentation.navigation.QRResultScreen
@@ -28,6 +30,7 @@ import com.example.qrcodeapp.presentation.ui.screens.OnBoardScreen
 import com.example.qrcodeapp.presentation.ui.screens.camera.CameraBarResultScreen
 import com.example.qrcodeapp.presentation.ui.screens.camera.CameraQrResultScreen
 import com.example.qrcodeapp.presentation.ui.screens.createqr.FacebookScreen
+import com.example.qrcodeapp.presentation.ui.screens.settings.SettingScreen
 import com.example.qrcodeapp.presentation.ui.theme.QrCodeAppTheme
 import com.example.qrcodeapp.presentation.ui.viewmodel.QrEditorViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -70,8 +73,8 @@ class MainActivity : ComponentActivity() {
 
 
                         //CameraQrResultScreen()
-                        HomeScreen(navController,viewModel)
-
+                        //HomeScreen(navController, viewModel)
+                        SettingScreen()
 
 
                     }
@@ -98,8 +101,11 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable<HistoryScreen> {
-                        //HistoryScreen(navController, viewModel)
-                        FavoriteScreen(navController,viewModel)
+                        HistoryScreen(navController, viewModel)
+                    }
+
+                    composable<FavouriteScreen> {
+                        FavoriteScreen(navController, viewModel)
                     }
 
                 }
@@ -107,6 +113,13 @@ class MainActivity : ComponentActivity() {
 
             }
         }
+    }
+
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Constants.is_from_history_or_fav = false
+
     }
 }
 

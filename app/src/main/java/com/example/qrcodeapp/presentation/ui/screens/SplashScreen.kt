@@ -33,7 +33,7 @@ fun SplashScreen(viewModel: QrEditorViewModel, navController: NavController) {
     val historyCreateList = viewModel.historyCreateList.collectAsState().value
 
     LaunchedEffect(Unit) {
-        viewModel.fetchHistory()
+       // viewModel.fetchHistory()
         viewModel.fetchHistoryCreate()
     }
 

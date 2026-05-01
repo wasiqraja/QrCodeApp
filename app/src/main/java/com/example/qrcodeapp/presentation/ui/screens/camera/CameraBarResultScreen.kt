@@ -1,15 +1,9 @@
 package com.example.qrcodeapp.presentation.ui.screens.camera
 
-import android.Manifest
-import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.os.Build
-import android.util.Log
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -60,11 +54,10 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import com.example.qrcodeapp.R
 import com.example.qrcodeapp.core.utils.AddHeight
-import com.example.qrcodeapp.core.utils.Constants.saveBitmapToDownloads
+import com.example.qrcodeapp.core.utils.Constants
 import com.example.qrcodeapp.core.utils.copyToClipboard
 import com.example.qrcodeapp.core.utils.getFormattedDateTime
 import com.example.qrcodeapp.core.utils.openUrl
@@ -79,63 +72,44 @@ fun CameraBarResultScreen(viewModel: QrEditorViewModel, navController: NavContro
     val activity = LocalActivity.current
     val bitmap: MutableState<Bitmap?> = remember { mutableStateOf(null) }
     val text = viewModel.cameraText.collectAsState().value
+    val hisFavNavModel = viewModel.historyFavNavModel.collectAsState().value
     val isFav = remember { mutableStateOf(false) }
-
 
 
     val context = LocalContext.current
 
-    // Permission launcher (for Android 9 and below)
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            saveBitmapToDownloads(
-                context,
-                bitmap.value!!,
-                "image_${System.currentTimeMillis()}.png"
-            )
-        } else {
-            Toast.makeText(context, "Permission denied", Toast.LENGTH_SHORT).show()
-        }
-    }
 
-    fun checkAndSaveBitmap() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            val hasPermission = ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
-            ) == PackageManager.PERMISSION_GRANTED
 
-            if (hasPermission) {
-                saveBitmapToDownloads(
-                    context,
-                    bitmap.value!!,
-                    "image_${System.currentTimeMillis()}.png"
-                )
-            } else {
-                permissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-            }
-        } else {
-            // No permission needed for Android 10+
-            saveBitmapToDownloads(
-                context,
-                bitmap.value!!,
-                "image_${System.currentTimeMillis()}.png"
-            )
-        }
-    }
 
     BackHandler {
+        Constants.is_from_history_or_fav = false
+        viewModel.resetHisFavNav()
         viewModel.resetText()
         navController.navigateUp()
     }
 
     LaunchedEffect(Unit) {
-        text?.let {
-            viewModel.initBarcodeDrawable(text) {
-                bitmap.value = it
-                viewModel.save(History(0, "abc", text!!, "BARCODE", getFormattedDateTime(),false))
+        if (!Constants.is_from_history_or_fav) {
+            text?.let {
+                viewModel.initBarcodeDrawable(text) {
+                    bitmap.value = it
+                    viewModel.save(
+                        History(
+                            0,
+                            "abc",
+                            text,
+                            "BARCODE",
+                            getFormattedDateTime(),
+                            false
+                        )
+                    )
+                }
+            }
+        } else {
+            hisFavNavModel?.resultText?.let {
+                viewModel.initBarcodeDrawable(hisFavNavModel.resultText) {
+                    bitmap.value = it
+                }
             }
         }
     }
@@ -159,6 +133,8 @@ fun CameraBarResultScreen(viewModel: QrEditorViewModel, navController: NavContro
         )
         {
             IconButton(onClick = {
+                Constants.is_from_history_or_fav = false
+                viewModel.resetHisFavNav()
                 viewModel.resetText()
                 navController.navigateUp()
             }) {
@@ -169,18 +145,27 @@ fun CameraBarResultScreen(viewModel: QrEditorViewModel, navController: NavContro
                 )
             }
 
-            Image(
-                painter = painterResource(R.drawable.del_icon),
-                contentDescription = "Home",
-                modifier = Modifier
-                    .size(26.dp)
-                    .clickable {
-                        isFav.value=false
-                        viewModel.delete()
-                        viewModel.resetText()
-                        navController.navigateUp()
-                    }
-            )
+            if (!Constants.is_from_history_or_fav) {
+                Image(
+                    painter = painterResource(R.drawable.del_icon),
+                    contentDescription = "Home",
+                    modifier = Modifier
+                        .size(26.dp)
+                        .clickable {
+                            isFav.value = false
+                            viewModel.delete()
+                            /*if (!Constants.is_from_history_or_fav) {
+                                viewModel.delete()
+                            } else {
+                                hisFavNavModel?.id?.let { id ->
+                                    viewModel.deleteHisFav(id)
+                                }
+                            }*/
+                            viewModel.resetText()
+                            navController.navigateUp()
+                        }
+                )
+            }
 
         }
 
@@ -279,20 +264,38 @@ fun CameraBarResultScreen(viewModel: QrEditorViewModel, navController: NavContro
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                text?.let {
-                    Text(
-                        text = text,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontSize = 13.sp,
-                        fontFamily = FontFamily(Font(R.font.visbycf_demibold)),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(start = 2.dp, end = 2.dp)
-                    )
+                if (!Constants.is_from_history_or_fav) {
+                    text?.let {
+                        Text(
+                            text = text,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontSize = 13.sp,
+                            fontFamily = FontFamily(Font(R.font.visbycf_demibold)),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(start = 2.dp, end = 2.dp)
+                        )
+                    }
+                } else {
+                    hisFavNavModel?.resultText?.let {
+                        Text(
+                            text = hisFavNavModel.resultText,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontSize = 13.sp,
+                            fontFamily = FontFamily(Font(R.font.visbycf_demibold)),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(start = 2.dp, end = 2.dp)
+                        )
+                    }
                 }
 
                 Text(
-                    text = getFormattedDateTime(),
+                    text = if (!Constants.is_from_history_or_fav) {
+                        getFormattedDateTime()
+                    } else {
+                        hisFavNavModel?.dateTime.toString()
+                    },
                     color = MaterialTheme.colorScheme.secondary,
                     fontSize = 13.sp,
                     fontFamily = FontFamily(Font(R.font.visbycf_demibold)),
@@ -319,9 +322,22 @@ fun CameraBarResultScreen(viewModel: QrEditorViewModel, navController: NavContro
             Box(
                 modifier = Modifier
                     .clickable {
-                        viewModel.favourite(true, favStatus = {
-                            isFav.value=it
-                        })
+                        if (!Constants.is_from_history_or_fav) {
+                            viewModel.favourite(true, favStatus = {
+                                isFav.value = it
+                            })
+                        } else {
+
+                            hisFavNavModel?.id?.let {
+                                viewModel.favouriteFromHisFav(
+                                    true,
+                                    hisFavNavModel.id,
+                                    favStatus = {
+                                        isFav.value = it
+                                    })
+                            }
+
+                        }
                     }
                     .padding(horizontal = 25.dp)
                     .weight(1f)
@@ -336,7 +352,13 @@ fun CameraBarResultScreen(viewModel: QrEditorViewModel, navController: NavContro
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Image(
-                        painter = painterResource(if (isFav.value){R.drawable.fav_filled_icon}else{R.drawable.fav_un_filled_icon}),
+                        painter = painterResource(
+                            if (isFav.value) {
+                                R.drawable.fav_filled_icon
+                            } else {
+                                R.drawable.fav_un_filled_icon
+                            }
+                        ),
                         contentDescription = null,
                         modifier = Modifier.size(18.dp)
                     )
@@ -358,8 +380,14 @@ fun CameraBarResultScreen(viewModel: QrEditorViewModel, navController: NavContro
             Box(
                 modifier = Modifier
                     .clickable {
-                        text?.let {
-                            activity?.copyToClipboard(text)
+                        if (!Constants.is_from_history_or_fav) {
+                            text?.let {
+                                activity?.copyToClipboard(text)
+                            }
+                        } else {
+                            hisFavNavModel?.resultText?.let { it ->
+                                activity?.copyToClipboard(it)
+                            }
                         }
                     }
                     .padding(horizontal = 25.dp)
@@ -401,9 +429,16 @@ fun CameraBarResultScreen(viewModel: QrEditorViewModel, navController: NavContro
 
         Button(
             onClick = {
-                text?.let {
-                    openUrl(context, text)
+                if (!Constants.is_from_history_or_fav) {
+                    text?.let {
+                        openUrl(context, text)
+                    }
+                } else {
+                    hisFavNavModel?.resultText?.let {
+                        openUrl(context, hisFavNavModel.resultText)
+                    }
                 }
+
             },
             modifier = Modifier
                 .fillMaxWidth()

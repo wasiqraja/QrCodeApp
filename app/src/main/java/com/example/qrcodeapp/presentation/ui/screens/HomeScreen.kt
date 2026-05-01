@@ -2,6 +2,7 @@ package com.example.qrcodeapp.presentation.ui.screens
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -11,7 +12,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -58,6 +58,7 @@ import com.example.qrcodeapp.core.utils.AddWidth
 import com.example.qrcodeapp.core.utils.Constants
 import com.example.qrcodeapp.domain.model.History
 import com.example.qrcodeapp.presentation.navigation.CameraScreen
+import com.example.qrcodeapp.presentation.navigation.FavouriteScreen
 import com.example.qrcodeapp.presentation.navigation.HistoryScreen
 import com.example.qrcodeapp.presentation.ui.viewmodel.QrEditorViewModel
 
@@ -153,7 +154,7 @@ fun HomeScreen(navController: NavController, viewModel: QrEditorViewModel) {
                 iconRes = R.drawable.scan_qr_code_home_icon, // Replace with your drawable
                 backgroundColor = Color(0xFFFF6D00),
                 onClick = {
-                    Constants.isFrom="qr"
+                    Constants.isFrom = "qr"
                     when {
                         ContextCompat.checkSelfPermission(
                             context,
@@ -177,7 +178,7 @@ fun HomeScreen(navController: NavController, viewModel: QrEditorViewModel) {
                 iconRes = R.drawable.scan_bar_code_home_icon, // Replace with your drawable
                 backgroundColor = Color(0xFFFF6D00), // Orange
                 onClick = {
-                    Constants.isFrom="bar"
+                    Constants.isFrom = "bar"
                     when {
                         ContextCompat.checkSelfPermission(
                             context,
@@ -238,11 +239,14 @@ fun HomeScreen(navController: NavController, viewModel: QrEditorViewModel) {
             )
             {
                 items(historyList, key = { it.id }) { item ->
-                    HistoryItem(
+                    HistoryItemHome(
                         item = item,
                         onFavClick = {
                             viewModel.updateFav(item.id)
-                            navController.navigate(HistoryScreen)
+                        },
+                        onItemClick = {
+                            //navController.navigate(HistoryScreen)
+                            navController.navigate(FavouriteScreen)
                         }
                     )
                 }
@@ -255,12 +259,17 @@ fun HomeScreen(navController: NavController, viewModel: QrEditorViewModel) {
 
 
 @Composable
-fun HistoryItem(
+fun HistoryItemHome(
     item: History,
-    onFavClick: () -> Unit
+    onFavClick: () -> Unit,
+    onItemClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
+            .clickable(interactionSource = null, indication = null) {
+                onItemClick()
+            }
+            .padding(vertical = 8.dp)
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp)),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceBright),
@@ -317,8 +326,9 @@ fun HistoryItem(
                 )
             }
 
+
             // Fav Button
-            Image(
+            Icon(
                 painter = if (item.isFavourite) {
                     painterResource(R.drawable.fav_filled_icon)
                 } else {
@@ -327,10 +337,10 @@ fun HistoryItem(
                 contentDescription = "Favourite",
                 modifier = Modifier
                     .size(22.dp)
-                    .clickable {
-                        onFavClick()
-                    }
+                    .clickable { onFavClick() },
+                tint = Color.Unspecified // 👈 IMPORTANT
             )
+
 
         }
     }

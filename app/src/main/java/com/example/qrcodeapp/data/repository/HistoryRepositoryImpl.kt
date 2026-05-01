@@ -30,6 +30,11 @@ class HistoryRepositoryImpl(
         dao.deleteAllHistory()
     }
 
+    override suspend fun deleteSelectedHistory(list: List<Int>) {
+        dao.deleteSelectedHistory(list)
+    }
+
+
     override suspend fun updateFavourite(id: Int, isFav: Boolean): Boolean {
         dao.updateFavourite(id)
         return dao.getFavouriteStatus(id)
